@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <title>Video Streaming</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <style>
+    .modal-overlay {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      left: 0;
+      top: 0;
+      display: none;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    .modal-window {
+      background-color: white;
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+      backdrop-filter: blur(13.5px);
+      -webkit-backdrop-filter: blur(13.5px);
+      width: 500px;
+      height: 680px;
+      top: 30px;
+      left: 20px;
+      position: relative;
+      z-index: 1050;
+    }
+
+    .title {
+      padding-left: 175px;
+      display: inline;
+      text-shadow: 1px 1px 2px gray;
+      color: white;
+    }
+
+    .title h2 {
+      display: inline;
+    }
+
+    .close-area {
+      display: inline;
+      float: right;
+      padding-right: 10px;
+      padding-top: 5px;
+      cursor: pointer;
+      text-shadow: 1px 1px 2px gray;
+      color: white;
+    }
+
+    .content {
+      margin-top: 20px;
+      padding: 0px 10px;
+      text-shadow: 1px 1px 2px gray;
+      color: black;
+    }
+
+    .modal-title {
+      background-color: lightslategray;
+    }
+
+    .all-center {
+      text-align: center;
+      line-height: 3px;
+    }
+
+    .video {
+      max-width: 80%;
+      display: block;
+      margin: 20px auto;
+      width: 250;
+      height: 300;
+    }
+  </style>
+  <script>
+    // 마커 이미지 설정, 크기 설정(카운트 값에 따라 다르게) 값은 임의로 포화 20이상, 위험 10이상, 이외 여유로 표현(변경 가능)
+    function cc(human_data) {
+      var den_count = human_data;
+      if (den_count > 500) {
+        marker_image =
+          "https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdn%2FbG5qEP%2FbtsibbwTykA%2FUofHqMIXBX6Ahgk2C0uBHk%2Fimg.png";
+        a = 100;
+        b = 105;
+      } //포화상태일때
+      else if (den_count >= 300) {
+        marker_image =
+          "https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdn%2FqC5Os%2Fbtsib09JNk4%2FPSTK6VrdkJamM7qZYMdGpk%2Fimg.png";
+        a = 80;
+        b = 85;
+      } //위험상태일때
+      else {
+        marker_image =
+          "https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdn%2FcwetVB%2Fbtsh6ALkuVb%2FpjsQ2FX2nM2EbtZunjPEH1%2Fimg.png";
+        a = 50;
+        b = 55;
+      } //여유상태일때
+    }
+  </script>
+</head>
+
+<body>
+  <!--마커1 첫번째 모달-->
+  <div id="data-container"></div>
+  <script>
+    var human_data0 = 0;
+    var human_arr0 = 0;
+    $(document).ready(function () {
+      // 서버로부터 정수 데이터를 받아오는 함수
+      function fetchIntData() {
+        $.ajax({
+          url: "/human_data0",
+          type: "GET",
+          success: function (response) {
+            // 데이터를 받아와서 HTML 요소에 표시
+            var human_data0 = parseInt(response);
+
+            $("#result").html("<p>Integer Data: " + human_data0 + "</p>"); //data
+          },
+          error: function (error) {
+            console.log("Error:", error);
+          },
+        });
+      }
+      // 초기 데이터 로드
+      fetchIntData();
+      // 주기적으로 데이터 업데이트
+      setInterval(fetchIntData, 5000); // 5초마다 업데이트
+
+      // 서버로부터 배열 값을 받아오는 함수
+      function fetchArray0() {
+        $.ajax({
+          url: "/human_county0",
+          type: "GET",
+          success: function (response) {
+            // 받아온 JSON 데이터를 파싱하여 배열로 변환
+            var human_arr0 = JSON.parse(response); //배열
+
+            // 배열 값을 출력
+            $("#result").html("<p>Array: " + human_arr0.join(", ") + "</p>");
+          },
+          error: function (error) {
+            console.log("Error:", error);
+          },
+        });
+      }
+
+      fetchArray0();
+
+      // 일정한 주기로 데이터 업데이트
+      setInterval(fetchArray, 10000); // 10초마다 업데이트
+    });
+  </script>
+
+<!-- 첫번째 모달창 내부에 표현되는 정보 -->
+  <div id="modal1" class="modal-overlay">
+    <div class="modal-window">
+      <div class="modal-title">
+        <div class="title">
+          <h2>실시간 혼잡도</h2>
+        </div>
+        <div class="close-area">X</div>
+      </div>
+      <div class="content">
+        <div class="all-center">
+          <h3>첫번째</h3>
+          <div id="inner1">
+            <script>
+              var obj = document.getElementById("inner1");
+              var den_count = human_data0;
+              if (den_count > 500) {
+                obj.innerHTML = "포화";
+                obj.style.color = '#FF0000';
+                obj.style.textAlign = 'center';
+                obj.style.fontSize = '20px'
+              }//포화상태일때
+              else if (den_count >= 300) {
+                obj.innerHTML = "위험";
+                obj.style.color = '#FFBF00';
+                obj.style.textAlign = 'center';
+                obj.style.fontSize = '20px'
+              }//위험상태일때
+              else {
+                obj.innerHTML = "여유";
+                obj.style.color = '#088A08';
+                obj.style.textAlign = 'center';
+                obj.style.fontSize = '20px'
+              }//여유상태일때
+            </script>
+          </div>
+          <br></br>
+          <br></br>
+          <br></br>
+          <br></br>
+          <br></br>
+          <br></br>
+          <img src="{{ url_for('video_feed0') }}" alt="Streaming not available" class="video"/>
+          <h3>시간별 인구 밀집도</h3>
+          <!--chart.js 생성-->
+          <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+          <!--div를 차트가 필요한 부분에 넣기 폭 조절 가능-->
+          <div style="width:480px">
+            <canvas id="myChart1"></canvas>
+          </div>
+          <script>
+            // 우선 컨텍스트를 가져옵니다. 
+            var ctx1 = document.getElementById("myChart1").getContext('2d');
+            /*
+            - Chart를 생성하면서, 
+            - ctx를 첫번째 argument로 넘겨주고, 
+            - 두번째 argument로 그림을 그릴때 필요한 요소들을 모두 넘겨줍니다. 
+            */
+
+            // flask에서 가져온 배열
+            var arr0 = new Array();
+              for(var i=0; i<human_arr0.length; i++) {
+                arr0[i] = human_arr0[i]
+              }
+
+            // 값에 따라 그래프 바(막대 그래프) 색상 설정
+            var color0 = new Array();
+            for(var i=0; i<arr0.length; i++) {
+              if (arr0[i] >= 500) {
+                color0[i] = 'rgba(201, 3, 3, 1)'; //빨강
+              }
+              else if (arr0[i] >= 300) {
+                color0[i] = 'rgba(251, 191, 24, 1)'; //노랑
+              }
+              else {
+                color0[i] = 'rgba(39, 166, 7, 1)'; //초록
+              }
+            }
+            
+            // chart.js에서 표현되는 그래프 바
+            var myChart1 = new Chart(ctx1, {
+              type: 'bar',
+              data: {
+                labels: ["04시", "05시", "06시", "07시", "08시",
+                  "09시", "10시", "11시", "12시", "13시",
+                  "14시", "15시", "16시", "17시", "18시",
+                  "19시", "20시", "21시", "22시", "23시",
+                  "24시", "1시", "2시", "3시", "4시"],
+                datasets: [{
+                  label: '# of Votes',
+                  data: arr0,
+                  backgroundColor: color0,
+                  borderColor: color0,
+                  borderWidth: 1
+                }]
+              },
+              options: {
+                maintainAspectRatio: true, // default value. false일 경우 포함된 div의 크기에 맞춰서 그려짐.
+                scales: {
+                  yAxes: [{
+                    ticks: {
+                      beginAtZero: true
+                    }
+                  }]
+                }
+              }
+            });
+          </script>
+
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <!--마커2 두번째 모달-->
+  <script>
+    var human_data1 = 0;
+    var human_arr1 = 0;
+    $(document).ready(function () {
+      // 서버로부터 정수 데이터를 받아오는 함수
+      function fetchValue1() {
+        $.ajax({
+          url: "/human_data1",
+          type: "GET",
+          success: function (response) {
+            // 받아온 값을 결과 요소에 표시
+            var human_data1 = parseInt(response);
+            $("#result").html("<p>사람 숫자: " + human_data1 + "</p>"); //data
+          },
+          error: function (error) {
+            console.log("Error:", error);
+          },
+        });
+      }
+      fetchValue1();
+
+      // 일정한 주기로 데이터 업데이트
+      setInterval(fetchValue, 1000); // 1초마다 업데이트
+
+      // 서버로부터 배열 값을 받아오는 함수
+      function fetchArray1() {
+        $.ajax({
+          url: "/human_county1",
+          type: "GET",
+          success: function (response) {
+            // 받아온 JSON 데이터를 파싱하여 배열로 변환
+            var human_arr1 = JSON.parse(response); //배열
+
+            // 배열 값을 출력
+            $("#result").html("<p>Array: " + human_arr1.join(", ") + "</p>");
+          },
+          error: function (error) {
+            console.log("Error:", error);
+          },
+        });
+      }
+
+      fetchArray1();
+
+      // 일정한 주기로 데이터 업데이트
+      setInterval(fetchArray, 10000); // 10초마다 업데이트
+    });
+  </script>
+
+<!-- 두번째 모달창 내부에 표현되는 정보 -->
+  <div id="modal2" class="modal-overlay">
+    <div class="modal-window">
+      <div class="modal-title">
+        <div class="title">
+          <h2>실시간 혼잡도</h2>
+        </div>
+        <div class="close-area">X</div>
+      </div>
+      <div class="content">
+        <div class="all-center">
+          <h3>두번째</h3>
+          <div id="inner2">
+            <script>
+              var obj = document.getElementById("inner2");
+              var den_count = human_data1;
+              if (den_count > 500) {
+                obj.innerHTML = "포화";
+                obj.style.color = '#FF0000';
+                obj.style.textAlign = 'center';
+                obj.style.fontSize = '20px'
+              }//포화상태일때
+              else if (den_count >= 300) {
+                obj.innerHTML = "위험";
+                obj.style.color = '#FFBF00';
+                obj.style.textAlign = 'center';
+                obj.style.fontSize = '20px'
+              }//위험상태일때
+              else {
+                obj.innerHTML = "여유";
+                obj.style.color = '#088A08';
+                obj.style.textAlign = 'center';
+                obj.style.fontSize = '20px'
+              }//여유상태일때
+            </script>
+          </div>
+          <br></br>
+          <br></br>
+          <br></br>
+          <br></br>
+          <br></br>
+          <br></br>
+          <img src="{{ url_for('video_feed1') }}" alt="Streaming not available" class="video"/>
+          <h3>시간별 인구 밀집도</h3>
+
+          <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+          <!--div를 차트가 필요한 부분에 넣기 폭 조절 가능-->
+          <div style="width:480px">
+            <canvas id="myChart2"></canvas>
+          </div>
+          <script>
+            // 우선 컨텍스트를 가져옵니다. 
+            var ctx2 = document.getElementById("myChart2").getContext('2d');
+            /*
+            - Chart를 생성하면서, 
+            - ctx를 첫번째 argument로 넘겨주고, 
+            - 두번째 argument로 그림을 그릴때 필요한 요소들을 모두 넘겨줍니다. 
+            */
+
+            var arr1 = new Array();
+              for(var i=0; i<human_arr1.length; i++) {
+                arr1[i] = human_arr1[i]
+              }
+
+            // 값에 따라 그래프 바(막대 그래프) 색상 설정
+            var color1 = new Array();
+            for(var i=0; i<arr1.length; i++) {
+              if (arr1[i] >= 500) {
+                color1[i] = 'rgba(201, 3, 3, 1)'; //빨강
+              }
+              else if (arr1[i] >= 300) {
+                color1[i] = 'rgba(251, 191, 24, 1)'; //노랑
+              }
+              else {
+                color1[i] = 'rgba(39, 166, 7, 1)'; //초록
+              }
+            }
+
+            var myChart2 = new Chart(ctx2, {
+              type: 'bar',
+              data: {
+                labels: ["04시", "05시", "06시", "07시", "08시",
+                  "09시", "10시", "11시", "12시", "13시",
+                  "14시", "15시", "16시", "17시", "18시",
+                  "19시", "20시", "21시", "22시", "23시",
+                  "24시", "1시", "2시", "3시", "4시"],
+                datasets: [{
+                  label: '# of Votes',
+                  data: arr1,
+                  backgroundColor: color1,
+                  borderColor: color1,
+                  borderWidth: 1
+                }]
+              },
+              options: {
+                maintainAspectRatio: true, // default value. false일 경우 포함된 div의 크기에 맞춰서 그려짐.
+                scales: {
+                  yAxes: [{
+                    ticks: {
+                      beginAtZero: true
+                    }
+                  }]
+                }
+              }
+            });
+          </script>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!--마커3 세번째 모달-->
+  <script>
+    var human_data2 = 0;
+    var human_arr2 = 0;
+    $(document).ready(function () {
+      // 서버로부터 정수 데이터를 받아오는 함수
+      function fetchValue2() {
+        $.ajax({
+          url: "/human_data2",
+          type: "GET",
+          success: function (response) {
+            // 받아온 값을 결과 요소에 표시
+            var human_data2 = parseInt(response);
+            $("#result").html("<p>사람 숫자: " + human_data2 + "</p>"); //data
+          },
+          error: function (error) {
+            console.log("Error:", error);
+          },
+        });
+      }
+      fetchValue2();
+
+      // 일정한 주기로 데이터 업데이트
+      setInterval(fetchValue, 1000); // 1초마다 업데이트
+
+      // 서버로부터 배열 값을 받아오는 함수
+      function fetchArray2() {
+        $.ajax({
+          url: "/human_county2",
+          type: "GET",
+          success: function (response) {
+            // 받아온 JSON 데이터를 파싱하여 배열로 변환
+            var human_arr2 = JSON.parse(response); //배열
+
+            // 배열 값을 출력
+            $("#result").html("<p>Array: " + human_arr2.join(", ") + "</p>");
+          },
+          error: function (error) {
+            console.log("Error:", error);
+          },
+        });
+      }
+
+      fetchArray2();
+
+      // 일정한 주기로 데이터 업데이트
+      setInterval(fetchArray, 10000); // 10초마다 업데이트
+    });
+  </script>
+
+<!-- 세번째 모달창 내부에 표현되는 정보 -->
+  <div id="modal3" class="modal-overlay">
+    <div class="modal-window">
+      <div class="modal-title">
+        <div class="title">
+          <h2>실시간 혼잡도</h2>
+        </div>
+        <div class="close-area">X</div>
+      </div>
+      <div class="content">
+        <div class="all-center">
+          <h3>세번째</h3>
+          <div id="inner3">
+            <script>
+              var obj = document.getElementById("inner3");
+              var den_count = human_data2;
+              if (den_count > 500) {
+                obj.innerHTML = "포화";
+                obj.style.color = '#FF0000';
+                obj.style.textAlign = 'center';
+                obj.style.fontSize = '20px'
+              }//포화상태일때
+              else if (den_count >= 300) {
+                obj.innerHTML = "위험";
+                obj.style.color = '#FFBF00';
+                obj.style.textAlign = 'center';
+                obj.style.fontSize = '20px'
+              }//위험상태일때
+              else {
+                obj.innerHTML = "여유";
+                obj.style.color = '#088A08';
+                obj.style.textAlign = 'center';
+                obj.style.fontSize = '20px'
+              }//여유상태일때
+            </script>
+          </div>
+          <br></br>
+          <br></br>
+          <br></br>
+          <br></br>
+          <br></br>
+          <br></br>
+          <img src="{{ url_for('video_feed2') }}" alt="Streaming not available" class="video"/>
+          <h3>시간별 인구 밀집도</h3>
+          <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+          <!--div를 차트가 필요한 부분에 넣기 폭 조절 가능-->
+          <div style="width:480px">
+            <canvas id="myChart3"></canvas>
+          </div>
+          <script>
+            // 우선 컨텍스트를 가져옵니다. 
+            var ctx3 = document.getElementById("myChart3").getContext('2d');
+            /*
+            - Chart를 생성하면서, 
+            - ctx를 첫번째 argument로 넘겨주고, 
+            - 두번째 argument로 그림을 그릴때 필요한 요소들을 모두 넘겨줍니다. 
+            */
+
+            var arr2 = new Array();
+              for(var i=0; i<human_arr2.length; i++) {
+                arr2[i] = human_arr2[i]
+              }
+
+            // 값에 따라 그래프 바(막대 그래프) 색상 설정
+            var color2 = new Array();
+            for(var i=0; i<arr2.length; i++) {
+              if (arr2[i] >= 500) {
+                color2[i] = 'rgba(201, 3, 3, 1)'; //빨강
+              }
+              else if (arr2[i] >= 300) {
+                color2[i] = 'rgba(251, 191, 24, 1)'; //노랑
+              }
+              else {
+                color2[i] = 'rgba(39, 166, 7, 1)'; //초록
+              }
+            }
+
+            var myChart3 = new Chart(ctx3, {
+              type: 'bar',
+              data: {
+                labels: ["04시", "05시", "06시", "07시", "08시",
+                  "09시", "10시", "11시", "12시", "13시",
+                  "14시", "15시", "16시", "17시", "18시",
+                  "19시", "20시", "21시", "22시", "23시",
+                  "24시", "1시", "2시", "3시", "4시"],
+                datasets: [{
+                  label: '# of Votes',
+                  data: arr2,
+                  backgroundColor: color2,
+                  borderColor: color2,
+                  borderWidth: 1
+                }]
+              },
+              options: {
+                maintainAspectRatio: true, // default value. false일 경우 포함된 div의 크기에 맞춰서 그려짐.
+                scales: {
+                  yAxes: [{
+                    ticks: {
+                      beginAtZero: true
+                    }
+                  }]
+                }
+              }
+            });
+          </script>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!--마커4 네번째 모달-->
+  <script>
+    var human_data3 = 0;
+    var human_arr3 = 0;
+    $(document).ready(function () {
+      // 서버로부터 정수 데이터를 받아오는 함수
+      function fetchValue3() {
+        $.ajax({
+          url: "/human_data3",
+          type: "GET",
+          success: function (response) {
+            // 받아온 값을 결과 요소에 표시
+            var human_data3 = parseInt(response);
+            $("#result").html("<p>사람 숫자: " + human_data3 + "</p>"); //data
+          },
+          error: function (error) {
+            console.log("Error:", error);
+          },
+        });
+      }
+      fetchValue0();
+
+      // 일정한 주기로 데이터 업데이트
+      setInterval(fetchValue, 1000); // 1초마다 업데이트
+
+      // 서버로부터 배열 값을 받아오는 함수
+      function fetchArray3() {
+        $.ajax({
+          url: "/human_county3",
+          type: "GET",
+          success: function (response) {
+            // 받아온 JSON 데이터를 파싱하여 배열로 변환
+            var human_arr3 = JSON.parse(response); //배열
+
+            // 배열 값을 출력
+            $("#result").html("<p>Array: " + human_arr3.join(", ") + "</p>");
+          },
+          error: function (error) {
+            console.log("Error:", error);
+          },
+        });
+      }
+
+      fetchArray0();
+
+      // 일정한 주기로 데이터 업데이트
+      setInterval(fetchArray, 10000); // 10초마다 업데이트
+    });
+  </script>
+
+<!-- 네번째 모달창 내부에 표현되는 정보 -->
+  <div id="modal4" class="modal-overlay">
+    <div class="modal-window">
+      <div class="modal-title">
+        <div class="title">
+          <h2>실시간 혼잡도</h2>
+        </div>
+        <div class="close-area">X</div>
+      </div>
+      <div class="content">
+        <div class="all-center">
+          <h3>네번째</h3>
+          <div id="inner4">
+            <script>
+              var obj = document.getElementById("inner4");
+              var den_count = human_data3;
+              if (den_count > 500) {
+                obj.innerHTML = "포화";
+                obj.style.color = '#FF0000';
+                obj.style.textAlign = 'center';
+                obj.style.fontSize = '20px'
+              }//포화상태일때
+              else if (den_count >= 300) {
+                obj.innerHTML = "위험";
+                obj.style.color = '#FFBF00';
+                obj.style.textAlign = 'center';
+                obj.style.fontSize = '20px'
+              }//위험상태일때
+              else {
+                obj.innerHTML = "여유";
+                obj.style.color = '#088A08';
+                obj.style.textAlign = 'center';
+                obj.style.fontSize = '20px'
+              }//여유상태일때
+            </script>
+          </div>
+          <br></br>
+          <br></br>
+          <br></br>
+          <br></br>
+          <br></br>
+          <br></br>
+          <img src="{{ url_for('video_feed3') }}" alt="Streaming not available" class="video"/>
+          <h3>시간별 인구 밀집도</h3>
+          <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+          <!--div를 차트가 필요한 부분에 넣기 폭 조절 가능-->
+          <div style="width:480px">
+            <canvas id="myChart4"></canvas>
+          </div>
+          <script>
+            // 우선 컨텍스트를 가져옵니다. 
+            var ctx4 = document.getElementById("myChart4").getContext('2d');
+            /*
+            - Chart를 생성하면서, 
+            - ctx를 첫번째 argument로 넘겨주고, 
+            - 두번째 argument로 그림을 그릴때 필요한 요소들을 모두 넘겨줍니다. 
+            */
+
+            var arr3 = new Array();
+              for(var i=0; i<human_arr3.length; i++) {
+                arr3[i] = human_arr3[i]
+              }
+
+            // 값에 따라 그래프 바(막대 그래프) 색상 설정
+            var color3 = 0;
+            for(var i=0; i<arr3.length; i++) {
+              if (arr3[i] >= 500) {
+                color3[i] = 'rgba(201, 3, 3, 1)'; //빨강
+              }
+              else if (arr3[i] >= 300) {
+                color3[i] = 'rgba(251, 191, 24, 1)'; //노랑
+              }
+              else {
+                color3[i] = 'rgba(39, 166, 7, 1)'; //초록
+              }
+            }
+
+            var myChart4 = new Chart(ctx4, {
+              type: 'bar',
+              data: {
+                labels: ["04시", "05시", "06시", "07시", "08시",
+                  "09시", "10시", "11시", "12시", "13시",
+                  "14시", "15시", "16시", "17시", "18시",
+                  "19시", "20시", "21시", "22시", "23시",
+                  "24시", "1시", "2시", "3시", "4시"],
+                datasets: [{
+                  label: '# of Votes',
+                  data: arr3,
+                  backgroundColor: color3,
+                  borderColor: color3,
+                  borderWidth: 1
+                }]
+              },
+              options: {
+                maintainAspectRatio: true, // default value. false일 경우 포함된 div의 크기에 맞춰서 그려짐.
+                scales: {
+                  yAxes: [{
+                    ticks: {
+                      beginAtZero: true
+                    }
+                  }]
+                }
+              }
+            });
+          </script>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- [ 지도 생성, kakao map api 불러오기 ] -->
+  <!-- 지도 생성하고 마커 클릭시 모달창 띄우는 코드여서 수정 불필요! -->
+  <div id="map" style="width: 100%; height: 100vh"></div>
+  <script type="text/javascript"
+    src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=9a83c77352c928ac2458bf3eca3d2d99"></script>
+
+  <script>
+    var mapContainer = document.getElementById("map"), // 지도를 표시할 div
+      mapOption = {
+        center: new kakao.maps.LatLng(36.736818, 127.075085), // 지도의 중심좌표
+        level: 3, // 지도의 확대 레벨
+      };
+
+    var map = new kakao.maps.Map(mapContainer, mapOption); // 지도를 생성합니다
+    // 일반 지도와 스카이뷰로 지도 타입을 전환할 수 있는 지도타입 컨트롤을 생성합니다
+    var mapTypeControl = new kakao.maps.MapTypeControl();
+
+    // 지도에 컨트롤을 추가해야 지도위에 표시됩니다
+    // kakao.maps.ControlPosition은 컨트롤이 표시될 위치를 정의하는데 TOPRIGHT는 오른쪽 위를 의미합니다
+    map.addControl(mapTypeControl, kakao.maps.ControlPosition.TOPRIGHT);
+
+    // 지도 확대 축소를 제어할 수 있는  줌 컨트롤을 생성합니다
+    var zoomControl = new kakao.maps.ZoomControl();
+    map.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
+
+    
+    // [ 마커 4개 생성 및 크기조절, 클릭시 모달창 띄우고 닫는 코드 구현 ]
+    // #1 첫번째 마커
+    cc(human_data0);
+    var imageSrc = marker_image, // 마커이미지의 주소입니다    
+      imageSize = new kakao.maps.Size(a, b), // 마커이미지의 크기입니다
+      imageOption = { offset: new kakao.maps.Point(27, 69) }; // 마커이미지의 옵션입니다. 마커의 좌표와 일치시킬 이미지 안에서의 좌표를 설정합니다.
+
+    // 마커의 이미지정보를 가지고 있는 마커이미지를 생성합니다
+    var markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize, imageOption),
+      markerPosition = new kakao.maps.LatLng(36.736209, 127.073237); // 마커가 표시될 위치입니다
+
+    // 마커를 생성합니다
+    var marker = new kakao.maps.Marker({
+      position: markerPosition,
+      image: markerImage // 마커이미지 설정 
+    });
+    // 마커가 지도 위에 표시되도록 설정합니다
+    marker.setMap(map);
+
+    // 모달창 - 클릭후 모달창 열기
+    const modal1 = document.getElementById("modal1")
+
+    // 마커에 클릭이벤트를 등록합니다
+    kakao.maps.event.addListener(marker, 'click', function () {
+      modal1.style.display = "flex"
+    });
+
+    function isModalOn1() {
+      return modal1.style.display === "flex"
+    }
+    function modalOff1() {
+      modal1.style.display = "none"
+    }
+
+    //모달창 닫는 3가지 방법
+    const closeBtn1 = modal1.querySelector(".close-area")
+    closeBtn1.addEventListener("click", e => {
+      modalOff1()
+    })
+    modal1.addEventListener("click", e => {
+      const evTarget = e.target
+      if (evTarget.classList.contains("modal-overlay")) {
+        modalOff1()
+      }
+    })
+    window.addEventListener("keyup", e => {
+      if (isModalOn() && e.key === "Escape") {
+        modalOff1()
+      }
+    })
+
+
+    // #2 두번째 마커
+    cc(human_data1);
+    var imageSrc = marker_image, // 마커이미지의 주소입니다    
+      imageSize = new kakao.maps.Size(a, b), // 마커이미지의 크기입니다
+      imageOption = { offset: new kakao.maps.Point(27, 69) }; // 마커이미지의 옵션입니다. 마커의 좌표와 일치시킬 이미지 안에서의 좌표를 설정합니다.
+
+    // 마커의 이미지정보를 가지고 있는 마커이미지를 생성합니다
+    var markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize, imageOption),
+      markerPosition = new kakao.maps.LatLng(36.736601, 127.074936); // 마커가 표시될 위치입니다
+
+    // 마커를 생성합니다
+    var marker = new kakao.maps.Marker({
+      position: markerPosition,
+      image: markerImage // 마커이미지 설정 
+    });
+    // 마커가 지도 위에 표시되도록 설정합니다
+    marker.setMap(map);
+
+    // 모달창 - 클릭후 모달창 열기
+    const modal2 = document.getElementById("modal2")
+
+    // 마커에 클릭이벤트를 등록합니다
+    kakao.maps.event.addListener(marker, 'click', function () {
+      modal2.style.display = "flex"
+    });
+
+    function isModalOn2() {
+      return modal2.style.display === "flex"
+    }
+    function modalOff2() {
+      modal2.style.display = "none"
+    }
+
+
+    // 모달창 닫는 3가지 방법
+    const closeBtn2 = modal2.querySelector(".close-area")
+    closeBtn2.addEventListener("click", e => {
+      modalOff2()
+    })
+    modal2.addEventListener("click", e => {
+      const evTarget = e.target
+      if (evTarget.classList.contains("modal-overlay")) {
+        modalOff2()
+      }
+    })
+    window.addEventListener("keyup", e => {
+      if (isModalOn() && e.key === "Escape") {
+        modalOff2()
+      }
+    })
+
+
+    // #3 세번째 마커
+    cc(human_data2);
+    var imageSrc = marker_image, // 마커이미지의 주소입니다    
+      imageSize = new kakao.maps.Size(a, b), // 마커이미지의 크기입니다
+      imageOption = { offset: new kakao.maps.Point(27, 69) }; // 마커이미지의 옵션입니다. 마커의 좌표와 일치시킬 이미지 안에서의 좌표를 설정합니다.
+
+    // 마커의 이미지정보를 가지고 있는 마커이미지를 생성합니다
+    var markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize, imageOption),
+      markerPosition = new kakao.maps.LatLng(36.736150, 127.074050); // 마커가 표시될 위치입니다
+
+    // 마커를 생성합니다
+    var marker = new kakao.maps.Marker({
+      position: markerPosition,
+      image: markerImage // 마커이미지 설정 
+    });
+    // 마커가 지도 위에 표시되도록 설정합니다
+    marker.setMap(map);
+
+    // 모달창 - 클릭후 모달창 열기
+    const modal3 = document.getElementById("modal3")
+
+    // 마커에 클릭이벤트를 등록합니다
+    kakao.maps.event.addListener(marker, 'click', function () {
+      modal3.style.display = "flex"
+    });
+
+    function isModalOn3() {
+      return modal3.style.display === "flex"
+    }
+    function modalOff3() {
+      modal3.style.display = "none"
+    }
+
+    // 모달창 닫는 3가지 방법
+    const closeBtn3 = modal3.querySelector(".close-area")
+    closeBtn3.addEventListener("click", e => {
+      modalOff3()
+    })
+    modal3.addEventListener("click", e => {
+      const evTarget = e.target
+      if (evTarget.classList.contains("modal-overlay")) {
+        modalOff3()
+      }
+    })
+    window.addEventListener("keyup", e => {
+      if (isModalOn() && e.key === "Escape") {
+        modalOff3()
+      }
+    })
+
+
+    // #4 네번째 마커
+    cc(human_data3);
+    var imageSrc = marker_image, // 마커이미지의 주소입니다    
+      imageSize = new kakao.maps.Size(a, b), // 마커이미지의 크기입니다
+      imageOption = { offset: new kakao.maps.Point(27, 69) }; // 마커이미지의 옵션입니다. 마커의 좌표와 일치시킬 이미지 안에서의 좌표를 설정합니다.
+
+    // 마커의 이미지정보를 가지고 있는 마커이미지를 생성합니다
+    var markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize, imageOption),
+      markerPosition = new kakao.maps.LatLng(36.735691, 127.075416); // 마커가 표시될 위치입니다
+
+    // 마커를 생성합니다
+    var marker = new kakao.maps.Marker({
+      position: markerPosition,
+      image: markerImage // 마커이미지 설정 
+    });
+    // 마커가 지도 위에 표시되도록 설정합니다
+    marker.setMap(map);
+
+
+    // 모달창 - 클릭후 모달창 열기
+    const modal4 = document.getElementById("modal4")
+
+    // 마커에 클릭이벤트를 등록합니다
+    kakao.maps.event.addListener(marker, 'click', function () {
+      modal4.style.display = "flex"
+    });
+
+    function isModalOn4() {
+      return modal.style.display === "flex"
+    }
+    function modalOff4() {
+      modal4.style.display = "none"
+    }
+
+    // 모달창 닫는 3가지 방법
+    const closeBtn4 = modal4.querySelector(".close-area")
+    closeBtn4.addEventListener("click", e => {
+      modalOff4()
+    })
+    modal4.addEventListener("click", e => {
+      const evTarget = e.target
+      if (evTarget.classList.contains("modal-overlay")) {
+        modalOff4()
+      }
+    })
+    window.addEventListener("keyup", e => {
+      if (isModalOn() && e.key === "Escape") {
+        modalOff4()
+      }
+    })
+  </script>
+</body>
+
+</html>
+<!--css
+background-image: url('~@/assets/images/home_black.svg');
+background-size: cover;
+-->

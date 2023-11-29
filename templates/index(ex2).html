@@ -1,0 +1,115 @@
+<!-- 가이드
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    필수 코드(import 역할)jquery호출하여 ajax처리
+
+  실시간 관측 사람 수 : url : /human_data0" //각 포트 별로 0을 1,2,3으로 변경
+
+  function fetchValue0() {
+          $.ajax({
+            url: "/human_data0",
+            type: "GET",
+            success: function (response) {
+              
+            var human_data0=response #사람 변수, str값임 int변환시 별도작업 필요
+              
+            },
+            error: function (error) {
+              console.log("Error:", error);
+            },
+          });
+        }
+  
+  기록된 사람 수: url : /human_county0 //위와 같음
+  //서버에서 배열을 보내며 크기는 24
+  arr[0~23]안에 관측한 값이 들어있다 호출해서 적절히 사용할 것
+
+          function fetchArray0() {
+          $.ajax({
+            url: "/human_county0",
+            type: "GET",
+            success: function (response) {
+            
+              // 받아온 JSON 데이터를 파싱하여 배열로 변환
+              var human_arr0 = JSON.parse(response); //배열값 저장
+            
+            },
+            error: function (error) {
+              console.log("Error:", error);
+            },
+          });
+        }
+    비디오 출력
+    <img src="{{ url_for('video_feed0') }}" alt="Streaming not available" />
+    
+    위와 마찬가지로 0을 1,2,3등으로 변경
+
+
+
+
+-->
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>AJAX Example</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  </head>
+  <body>
+    <h1>Real-Time Video Streaming:</h1>
+    <img src="{{ url_for('video_feed0') }}" alt="Streaming not available" />
+
+    <script>
+      $(document).ready(function () {
+        // 서버로부터 값을 받아오는 함수
+        function fetchValue0() {
+          $.ajax({
+            url: "/human_data0",
+            type: "GET",
+            success: function (response) {
+              var human_data0 = response;
+              // 받아온 값을 결과 요소에 표시
+              $("#result").html("<p>사람 숫자: " + human_data0 + "</p>");
+            },
+            error: function (error) {
+              console.log("Error:", error);
+            },
+          });
+        }
+        fetchValue0();
+
+        // 일정한 주기로 데이터 업데이트
+        setInterval(fetchValue, 1000); // 1초마다 업데이트
+
+        // 서버로부터 배열 값을 받아오는 함수
+        // AJAX 요청 보내고 응답 처리하는 함수
+      function fetchData() {
+        fetch('/array_data')  // 서버의 경로에 맞게 수정
+          .then(response => response.json())
+          .then(data => {
+            // 응답 데이터를 처리하는 코드 작성
+            displayData(data);
+          })
+          .catch(error => {
+            // 에러 처리 코드 작성
+            console.error('Error:', error);
+          });
+      }
+
+      // 데이터를 출력하는 함수
+      function displayData(data) {
+        // 결과를 표시할 요소를 가져옵니다
+        const resultElement = document.getElementById('result');
+
+        // 데이터를 HTML로 변환하여 요소에 할당합니다
+        const html = data.map(item => `<p>${item}</p>`).join('');
+        resultElement.innerHTML = html;
+      }
+
+
+        fetchArray0();
+
+        // 일정한 주기로 데이터 업데이트
+        setInterval(fetchArray, 10000); // 10초마다 업데이트
+      });
+    </script>
+  </body>
+</html>

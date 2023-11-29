@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Human County</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $.ajax({
+                url: '/human_county2',
+                type: 'GET',
+                success: function (data) {
+                    // 서버에서 받은 배열 데이터를 출력
+                    $('#result').text(JSON.stringify(data));
+                },
+                error: function (xhr, status, error) {
+                    console.log(error);
+                }
+            });
+        });
+    </script>
+</head>
+<body>
+    <h1>Human County</h1>
+    <div id="result"></div>
+</body>
+</html>
